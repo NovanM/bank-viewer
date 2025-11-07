@@ -47,3 +47,28 @@ func TestParse_Error_InvalidAmount(t *testing.T) {
 	assert.Nil(t, transactions)
 	assert.Contains(t, err.Error(), "invalid amount on line 0: strconv.ParseInt: parsing \"NOT_A_NUMBER\": invalid syntax")
 }
+
+func generateCSVData(rows int) string {
+	var sb strings.Builder
+	row := "1624507883,JOHN DOE,DEBIT,250000,SUCCESS,restaurant\n"
+	for i := 0; i < rows; i++ {
+		sb.WriteString(row)
+	}
+	return sb.String()
+}
+
+func BenchmarkParse(b *testing.B) {
+	csvData := generateCSVData(1000)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		reader := strings.NewReader(csvData)
+
+		_, err := Parse(reader)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}

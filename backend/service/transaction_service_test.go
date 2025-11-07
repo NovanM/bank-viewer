@@ -3,6 +3,7 @@ package service
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -128,4 +129,52 @@ func TestProcessUpload_ParseError(t *testing.T) {
 	assert.Contains(t, err.Error(), "invalid format")
 
 	mockRepo.AssertNotCalled(t, "Store", mock.Anything, mock.Anything)
+}
+
+func generateMockData(rows int) []domain.Transaction {
+	data := make([]domain.Transaction, 0, rows)
+	for i := 0; i < rows; i++ {
+		status := domain.StatusSuccess
+		if i%3 == 0 {
+			status = domain.StatusFailed
+		} else if i%5 == 0 {
+			status = domain.StatusPending
+		}
+
+		data = append(data, domain.Transaction{
+			Timestamp: time.Now().Add(time.Duration(i) * time.Second),
+			Name:      "E-COMMERCE " + strconv.Itoa(i),
+			Type:      domain.TypeDebit,
+			Amount:    int64(i * 100), // Buat amount berbeda agar sorting bekerja
+			Status:    status,
+		})
+	}
+	return data
+}
+
+func BenchmarkGetIssues(b *testing.B) {
+	largeMockData := generateMockData(10000)
+
+	mockRepo := new(MockTransactionRepository)
+	mockRepo.On("GetAll", mock.Anything).Return(largeMockData, nil)
+
+	s := NewTransactionService(mockRepo)
+
+	params := domain.PaginationParams{
+		Page:    1,
+		Limit:   100,
+		SortBy:  "amount",
+		SortDir: "desc",
+	}
+	ctx := context.Background()
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, err := s.GetIssues(ctx, params)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
 }
