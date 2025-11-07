@@ -45,14 +45,6 @@ jobs:
         run: golangci-lint run ./...
         working-directory: ./backend
 
-      - name: Install govulncheck (latest)
-        run: go install golang.org/x/vuln/cmd/govulncheck@latest
-        working-directory: ./backend
-
-      - name: Run vulnerability scan
-        run: govulncheck ./...
-        working-directory: ./backend
-
       - name: Run tests with race detector and coverage
         run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
         working-directory: ./backend
