@@ -67,7 +67,10 @@ func (h *TransactionHandler) Upload(w http.ResponseWriter, r *http.Request) {
 			filePart = part
 			break
 		} else {
-			io.Copy(io.Discard, part)
+			if _, err := io.Copy(io.Discard, part); err != nil {
+				RespondWithError(w, http.StatusInternalServerError, "Failed to parse multipart form")
+				return
+			}
 		}
 	}
 

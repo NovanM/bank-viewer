@@ -47,6 +47,9 @@ func TestRepository_Concurrency(t *testing.T) {
 	initialData := []domain.Transaction{{Name: "Initial", Amount: 1}}
 	repo.Store(ctx, initialData)
 
+	err := repo.Store(ctx, initialData)
+	assert.NoError(t, err)
+
 	var wg sync.WaitGroup
 	wg.Add(3)
 
