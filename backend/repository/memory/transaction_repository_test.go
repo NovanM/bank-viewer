@@ -45,8 +45,6 @@ func TestRepository_Concurrency(t *testing.T) {
 	ctx := context.Background()
 
 	initialData := []domain.Transaction{{Name: "Initial", Amount: 1}}
-	repo.Store(ctx, initialData)
-
 	err := repo.Store(ctx, initialData)
 	assert.NoError(t, err)
 
@@ -55,9 +53,10 @@ func TestRepository_Concurrency(t *testing.T) {
 
 	go func() {
 		defer wg.Done()
-		time.Sleep(50 * time.Millisecond) // Biarkan pembaca jalan dulu
+		time.Sleep(50 * time.Millisecond)
 		newData := []domain.Transaction{{Name: "New Data", Amount: 999}}
-		repo.Store(ctx, newData)
+		err := repo.Store(ctx, newData)
+		assert.NoError(t, err)
 	}()
 
 	go func() {
@@ -80,5 +79,4 @@ func TestRepository_Concurrency(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(finalData))
 	assert.Equal(t, "New Data", finalData[0].Name)
-
 }
